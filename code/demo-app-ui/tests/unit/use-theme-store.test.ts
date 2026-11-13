@@ -54,36 +54,36 @@ describe('useThemeStore', () => {
     expect(useThemeStore.getState().isDark).toBe(true);
   });
 
-  it('persists theme to localStorage when changed', () => {
+  it('persists theme to sessionStorage when changed', () => {
     useThemeStore.getState().setTheme('corporate');
 
-    const stored = localStorage.getItem('theme-storage');
+    const stored = sessionStorage.getItem('theme-storage');
     expect(stored).toBeTruthy();
 
     const parsed = JSON.parse(stored!);
     expect(parsed.state.theme).toBe('corporate');
   });
 
-  it('persists isDark to localStorage when toggled', () => {
+  it('persists isDark to sessionStorage when toggled', () => {
     useThemeStore.getState().toggleDark();
 
-    const stored = localStorage.getItem('theme-storage');
+    const stored = sessionStorage.getItem('theme-storage');
     expect(stored).toBeTruthy();
 
     const parsed = JSON.parse(stored!);
     expect(parsed.state.isDark).toBe(true);
   });
 
-  it('restores theme from localStorage on initialization', () => {
+  it('restores theme from sessionStorage on initialization', () => {
     // Simulate stored state
-    localStorage.setItem('theme-storage', JSON.stringify({
+    sessionStorage.setItem('theme-storage', JSON.stringify({
       state: { theme: 'warm', isDark: true },
       version: 0,
     }));
 
     // Re-create store to trigger persistence rehydration
     // Note: In real app, this happens on page load
-    const storedState = JSON.parse(localStorage.getItem('theme-storage')!);
+    const storedState = JSON.parse(sessionStorage.getItem('theme-storage')!);
     expect(storedState.state.theme).toBe('warm');
     expect(storedState.state.isDark).toBe(true);
   });

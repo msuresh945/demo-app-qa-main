@@ -1,8 +1,5 @@
-# AI Working Journal
 
 ## Investigating Missing Generated API Client
-
-**Objective:** Identify the cause of the frontend startup/build failure.
 
 **Problem encountered:**
 
@@ -11,8 +8,6 @@ During Application Startup, the application reported:
 `Module not found: Can't resolve './generated'`
 
 The error originated from `src/lib/api/bff-client.ts`.
-
-**AI tool used:** GitHub Copilot Chat
 
 **Prompt used:**
 
@@ -52,4 +47,36 @@ Restarted the development server and rebuilt the UI container.
 **Decision:** Accepted the root-cause analysis and the suggested resolution after validating it locally.
 
 **Outcome:** Initial application startup issue resolved. No application source-code modifications were made as part of this investigation.
+
+---
+
+## Investigating Existing UI Test Failures
+
+I used Copilot to help investigate the failing tests in the theme store and Claim Wizard Step 2 test files. I asked it to review the failing test cases and compare the test implementation with the corresponding application code.
+
+**Issues identified:**
+
+- Theme persistence tests were using `localStorage`, whereas the application store was using `sessionStorage`.
+- A long-text input test was taking longer than expected because `userEvent.type()` simulated each individual keystroke.
+
+**My evaluation:**
+
+I reviewed the suggestions against the application implementation and test code. The identified issues were related to the test expectations and test execution approach rather than defects in the application.
+
+**Action taken:**
+
+- Updated the theme persistence tests to use `sessionStorage`.
+- Replaced the long text typing operation with `fireEvent.change()` to avoid unnecessary delays during test execution.
+- Removed the unnecessary user-event setup from the affected test where it was no longer required.
+
+**Independent validation:**
+
+- Executed the theme store test file separately.
+- Executed the Claim Wizard Step 2 test file separately.
+- Reran the complete UI test suite.
+
+**Decision:** Accepted the suggestions after reviewing the changes and validating the affected tests.
+
+**Outcome:** Both issues were resolved, and the complete UI test suite passed on rerun. No production application code was modified.
+
 ---

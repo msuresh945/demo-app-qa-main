@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WizardStep2 } from './wizard-step-2';
@@ -105,13 +105,12 @@ describe('WizardStep2', () => {
     });
 
     it('should show primary color when approaching maximum', async () => {
-      const user = userEvent.setup();
       render(<WizardStep2 />);
 
       const textarea = screen.getByLabelText(/Describe what happened/i);
 
       const longText = 'a'.repeat(950);
-      await user.type(textarea, longText);
+      fireEvent.change(textarea, { target: { value: longText } });
 
       await waitFor(() => {
         const counter = screen.getByText('950/1000');
