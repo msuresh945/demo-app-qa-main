@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './tests',
+  testIgnore: ['**/unit/**'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -12,10 +13,11 @@ export default defineConfig({
     ['junit', { outputFile: 'playwright-report/results.xml' }],
   ],
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: process.env.BASE_URL ?? 'http://localhost:3001',
+    screenshot: 'only-on-failure',
     trace: 'on-first-retry',
+    video: 'retain-on-failure',
   },
-  globalSetup: './tests/e2e/global-setup.ts',
   projects: [
     {
       name: 'chromium',
@@ -32,10 +34,17 @@ export default defineConfig({
   ],
   webServer: {
     command: process.env.CI
-      ? 'npm run build && npm run start -- --port 3001'
-      : 'npm run dev -- --port 3001',
+      ? 'npm run generate:api && npm run build && npm run start -- --port 3001'
+      : 'npm run generate:api && npm run dev -- --port 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_BFF_URL:
+        process.env.NEXT_PUBLIC_BFF_URL ??
+        process.env.BFF_API_URL ??
+        'http://localhost:8090',
+    },
   },
 });

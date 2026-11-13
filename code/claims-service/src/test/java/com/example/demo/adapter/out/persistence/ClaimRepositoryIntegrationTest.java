@@ -94,6 +94,7 @@ class ClaimRepositoryIntegrationTest {
         assertThat(retrieved).isPresent();
         assertThat(retrieved.get().getClaimId()).isEqualTo(claimId);
         assertThat(retrieved.get().getUserId()).isEqualTo(userId);
+        assertThat(retrieved.get().getIncidentDate()).isEqualTo(LocalDate.now().minusDays(1));
         assertThat(retrieved.get().getIncidentLocation()).isEqualTo("123 Main St, City");
         assertThat(retrieved.get().getDescription()).isEqualTo("Vehicle collision on highway");
         assertThat(retrieved.get().getClaimAmount()).isEqualByComparingTo(new BigDecimal("5000.00"));
@@ -168,6 +169,34 @@ class ClaimRepositoryIntegrationTest {
         // Assert
         assertThat(updated.getStatus()).isEqualTo(ClaimStatus.UNDER_REVIEW);
         assertThat(updated.getUpdatedAt()).isAfter(originalUpdatedAt);
+    }
+
+    @Test
+    @DisplayName("Update claim status, then retrieve persisted status from PostgreSQL")
+    void should_PersistStatusChange_When_ClaimStatusUpdated() {
+        UUID claimId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        insertTestUser(userId);
+
+        Claim claim = new Claim(
+                claimId,
+                userId,
+                LocalDate.now().minusDays(1),
+                "Status persistence location",
+                "Status persistence description",
+                new BigDecimal("2500.00")
+        );
+        claimRepository.save(claim);
+
+        claim.updateStatus(ClaimStatus.UNDER_REVIEW);
+        claimRepository.save(claim);
+
+        Optional<Claim> retrieved = claimRepository.findById(claimId);
+
+        assertThat(retrieved).isPresent();
+        assertThat(retrieved.get().getClaimId()).isEqualTo(claimId);
+        assertThat(retrieved.get().getUserId()).isEqualTo(userId);
+        assertThat(retrieved.get().getStatus()).isEqualTo(ClaimStatus.UNDER_REVIEW);
     }
 
     @Test
