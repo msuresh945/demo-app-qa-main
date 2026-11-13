@@ -5,6 +5,7 @@ import com.example.demo.domain.claim.events.ClaimStatusChanged;
 import com.example.demo.domain.claim.events.ClaimSubmitted;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,9 +23,11 @@ import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +48,7 @@ class KafkaDomainEventPublisherTest {
     @BeforeEach
     void setUp() {
         publisher = new KafkaDomainEventPublisher(kafkaTemplate, objectMapper, schemaValidator);
+        lenient().when(objectMapper.createObjectNode()).thenReturn(new ObjectMapper().createObjectNode());
     }
 
     // TC-077: Event published to Kafka with correct topic and message key
@@ -59,7 +63,7 @@ class KafkaDomainEventPublisherTest {
                 BigDecimal.TEN,
                 Instant.now()
         );
-        when(objectMapper.writeValueAsString(event)).thenReturn("{\"eventId\":\"test\"}");
+        when(objectMapper.writeValueAsString(any(ObjectNode.class))).thenReturn("{\"eventId\":\"test\"}");
         doNothing().when(schemaValidator).validate(anyString(), anyString());
         when(kafkaTemplate.send(anyString(), anyString(), anyString()))
                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -82,7 +86,7 @@ class KafkaDomainEventPublisherTest {
                 UUID.randomUUID(),
                 Instant.now()
         );
-        when(objectMapper.writeValueAsString(event)).thenReturn("{\"type\":\"status-changed\"}");
+        when(objectMapper.writeValueAsString(any(ObjectNode.class))).thenReturn("{\"type\":\"status-changed\"}");
         doNothing().when(schemaValidator).validate(anyString(), anyString());
         when(kafkaTemplate.send(anyString(), anyString(), anyString()))
                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -135,7 +139,8 @@ class KafkaDomainEventPublisherTest {
                 BigDecimal.TEN,
                 Instant.now()
         );
-        when(objectMapper.writeValueAsString(event)).thenThrow(new JsonProcessingException("test") {});
+        when(objectMapper.writeValueAsString(any(ObjectNode.class)))
+                .thenThrow(new JsonProcessingException("test") {});
 
         assertThatThrownBy(() -> publisher.publish(event))
                 .isInstanceOf(IllegalStateException.class)
@@ -159,7 +164,7 @@ class KafkaDomainEventPublisherTest {
         realMapper.findAndRegisterModules();
         String serialized = realMapper.writeValueAsString(event);
 
-        when(objectMapper.writeValueAsString(event)).thenReturn(serialized);
+        when(objectMapper.writeValueAsString(any(ObjectNode.class))).thenReturn(serialized);
         doNothing().when(schemaValidator).validate(serialized, "ClaimSubmittedMessage");
         when(kafkaTemplate.send(anyString(), anyString(), anyString()))
                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -183,7 +188,7 @@ class KafkaDomainEventPublisherTest {
                 Instant.now()
         );
         String payloadMissingClaimId = "{\"eventId\":\"evt-1\"}";
-        when(objectMapper.writeValueAsString(event)).thenReturn(payloadMissingClaimId);
+        when(objectMapper.writeValueAsString(any(ObjectNode.class))).thenReturn(payloadMissingClaimId);
         doThrow(new KafkaMessageValidationException("claimId: is missing but it is required"))
                 .when(schemaValidator).validate(payloadMissingClaimId, "ClaimSubmittedMessage");
 
@@ -206,7 +211,7 @@ class KafkaDomainEventPublisherTest {
         );
         String payloadWithInvalidStatus = "{\"eventId\":\"evt-1\",\"claimId\":\"" + claimId
                 + "\",\"oldStatus\":\"INVALID_STATUS\",\"newStatus\":\"UNDER_REVIEW\",\"occurredAt\":\"2026-03-08T10:00:00Z\"}";
-        when(objectMapper.writeValueAsString(event)).thenReturn(payloadWithInvalidStatus);
+        when(objectMapper.writeValueAsString(any(ObjectNode.class))).thenReturn(payloadWithInvalidStatus);
         doThrow(new KafkaMessageValidationException("oldStatus: does not have a value in the enumeration"))
                 .when(schemaValidator).validate(payloadWithInvalidStatus, "ClaimStatusChangedMessage");
 

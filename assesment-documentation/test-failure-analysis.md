@@ -51,3 +51,89 @@ After making these changes:
 - No changes were made to the production application code.
 
 These fixes helped get the UI test suite running successfully without changing the existing application behaviour.
+
+---
+
+## Claims Service Test Failure Analysis
+
+During the execution of the Claims Service test suite, I encountered a few failures in existing unit tests. On investigating them, I found that the tests were not fully aligned with the current production implementation.
+
+### 1. Maven Wrapper Configuration
+
+**File/Location:** Claims Service Maven wrapper
+
+**Issue:**
+
+The Maven wrapper could not start because the `.mvn/wrapper/maven-wrapper.properties` file was missing.
+
+**Root cause:**
+
+The repository did not contain the required Maven wrapper configuration.
+
+**Resolution:**
+
+Since Maven was already installed locally, I used the installed Maven to execute the tests:
+
+```bash
+mvn clean test
+```
+
+The Maven wrapper files were not modified.
+
+### 2. UpdateClaimStatusUseCaseTest – Outdated Constructor
+
+**File:** `UpdateClaimStatusUseCaseTest.java`
+
+**Issue:**
+
+The test was using an outdated constructor with three dependencies, whereas the current production implementation requires four dependencies.
+
+**Root cause:**
+
+`ApplicationEventPublisher` had been added as a constructor dependency in the production implementation, but the test had not been updated accordingly.
+
+**Fix:**
+
+Added a mock of `ApplicationEventPublisher` and updated the test to use the current constructor.
+
+### 3. KafkaDomainEventPublisherTest – Outdated Serialization Mock
+
+**File:** `KafkaDomainEventPublisherTest.java`
+
+**Issue:**
+
+The Kafka publisher tests were failing because they were mocking the previous event serialization behaviour.
+
+**Root cause:**
+
+The current `KafkaDomainEventPublisher` implementation creates an `ObjectNode` envelope before serializing the event. The existing tests were still mocking direct serialization of the original event, resulting in a null `ObjectNode`.
+
+**Fix:**
+
+Updated the test mocks to handle `createObjectNode()` and the serialization of `ObjectNode` instances, matching the current publisher implementation.
+
+### 4. CreateClaimUseCaseTest – Missing Configuration Initialization
+
+**File:** `CreateClaimUseCaseTest.java`
+
+**Issue:**
+
+The test assertion for domain events was failing because the expected events were being cleared during execution.
+
+**Root cause:**
+
+The `cdcEnabled` property is normally populated through Spring's `@Value` injection. Since the test uses Mockito without the Spring application context, this property was not initialized and defaulted to `false`.
+
+As a result, the use case cleared the domain events.
+
+**Fix:**
+
+Added the required event publisher mock and explicitly initialized `cdcEnabled` to the application's default value (`true`) in the test.
+
+### Overall Outcome
+
+The investigation identified three test implementation issues caused by changes in the production constructor, Kafka serialization behaviour and Spring configuration handling.
+
+The affected test files were updated to match the current implementation.
+
+Only test files were modified. No production implementation files were changed.

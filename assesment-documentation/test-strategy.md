@@ -201,10 +201,27 @@ The primary end-to-end scenario will be:
 
 This will help validate the complete workflow across the different application components.
 
-## 7. Initial Assessment of Existing Tests
+## 7. Existing Test Suite Review and Execution
 
-As a first step, I reviewed the existing test suites and executed the UI tests to understand the current coverage and identify any issues.
+As part of the assessment, I reviewed and executed the existing test suites across the UI, BFF Service and Claims Service to understand the current test coverage and identify any issues.
 
-The initial UI test execution revealed two issues in the existing tests: one related to theme persistence and another related to handling long text inputs. I investigated both issues and updated the tests without making changes to the application code.
+The initial UI test execution identified two issues related to theme persistence and long-text input handling. I investigated both and updated the affected tests without making changes to the application code.
 
-The existing UI tests primarily cover individual components, stores, validation rules and UI behaviour. While this provides a good level of coverage at the component level, additional end-to-end tests are needed to validate complete business workflows across the claimant and admin interfaces.
+During BFF Service test execution, all existing tests passed successfully without any failures.
+
+While executing the Claims Service tests, I identified a few issues in the existing test implementations. These were related to an outdated constructor, changes in Kafka event serialization and a configuration property that was not initialized in the Mockito test setup. I updated the affected tests to align with the current production implementation.
+
+**Test execution summary:**
+
+| Component | Tests Executed | Passed | Failed | Status |
+|---|---:|---:|---:|---|
+| UI | 266 | 266 | 0 | Passed |
+| BFF Service | 213 | 213 | 0 | Passed |
+| Claims Service | 197 | 197 | 0 | Passed |
+| **Total** | **676** | **676** | **0** | **Passed** |
+
+All three test suites completed successfully after the identified test issues were resolved.
+
+The existing tests provide coverage for individual UI components, stores, validation rules, backend business logic and service-level integrations.
+
+However, passing the existing test suites does not necessarily validate the complete business workflow across all application components. Additional testing is still needed to cover the claimant and admin journey end to end.

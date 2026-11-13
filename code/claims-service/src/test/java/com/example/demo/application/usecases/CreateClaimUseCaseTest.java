@@ -10,6 +10,8 @@ import com.example.demo.user.domain.UserId;
 import com.example.demo.user.domain.UserRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +44,9 @@ class CreateClaimUseCaseTest {
     @Mock
     private Counter mockCounter;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private CreateClaimUseCase useCase;
 
@@ -49,6 +54,7 @@ class CreateClaimUseCaseTest {
     void setUp() {
         // Stub MeterRegistry to return a mock Counter (lenient to avoid UnnecessaryStubbingException)
         lenient().when(meterRegistry.counter(anyString(), any(String[].class))).thenReturn(mockCounter);
+        ReflectionTestUtils.setField(useCase, "cdcEnabled", true);
     }
 
     @Test

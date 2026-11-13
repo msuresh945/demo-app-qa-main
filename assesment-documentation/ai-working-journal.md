@@ -80,3 +80,42 @@ I reviewed the suggestions against the application implementation and test code.
 **Outcome:** Both issues were resolved, and the complete UI test suite passed on rerun. No production application code was modified.
 
 ---
+
+## Claims Service Test Failure Investigation
+
+Used AI assistance to investigate the failing test cases by reviewing the test implementations, production constructors, Kafka publisher implementation and configuration handling.
+
+**Issues investigated:**
+
+1. **UpdateClaimStatusUseCaseTest – Outdated Constructor**
+
+   The test was using an outdated constructor with three dependencies, whereas the current production implementation requires four dependencies, including `ApplicationEventPublisher`.
+
+2. **KafkaDomainEventPublisherTest – Outdated Serialization Mock**
+
+   The Kafka publisher now creates an `ObjectNode` envelope before serializing the event. However, the existing test was still mocking the previous direct event serialization behaviour, resulting in a null `ObjectNode`.
+
+3. **CreateClaimUseCaseTest – Missing Configuration Initialization**
+
+   The `cdcEnabled` property was not initialized in the Mockito unit test because Spring's `@Value` injection was not applied. As a result, it defaulted to `false`, causing the use case to clear the domain events.
+
+**My evaluation:**
+
+I reviewed the identified issues against the current production implementation and the affected test files. The failures were related to outdated test implementations and missing test configuration rather than confirmed defects in the application code.
+
+**Action taken:**
+
+- Added a mocked `ApplicationEventPublisher` to `UpdateClaimStatusUseCaseTest.java`.
+- Updated `KafkaDomainEventPublisherTest.java` to handle `ObjectNode` creation and serialization.
+- Added the required event publisher mock and explicitly initialized `cdcEnabled` to the application's default value (`true`) in `CreateClaimUseCaseTest.java`.
+- Used the locally installed Maven to execute the tests because the repository was missing the Maven wrapper configuration file.
+
+**Independent validation:**
+
+After making the changes, I reran the complete Claims Service test suite and complete test suite passed successfully.
+
+**Decision:** Reviewed the suggested solutions, made the necessary test changes and verified them by rerunning the complete test suite.
+
+**Outcome:** All 197 Claims Service tests passed. The identified test issues were resolved, and no production implementation files were modified.
+
+---
